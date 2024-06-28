@@ -85,7 +85,7 @@ jobs:
       - name: Tag version
         run: |
           git tag v${{ steps.get_version.outputs.version }}
-          git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/andykcheng/lmcmd.git v${{ steps.get_version.outputs.version }}
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/andykcheng/lmcmd.git v${{ steps.get_version.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -93,7 +93,7 @@ jobs:
         id: create_release
         uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: v${{ steps.get_version.outputs.version }}
           release_name: Release v${{ steps.get_version.outputs.version }}
@@ -121,7 +121,7 @@ jobs:
       - name: Upload Linux binary to release
         uses: actions/upload-release-asset@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./lmcmd-linux
@@ -131,7 +131,7 @@ jobs:
       - name: Upload macOS x86 binary to release
         uses: actions/upload-release-asset@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./lmcmd-macos-x86
@@ -141,7 +141,7 @@ jobs:
       - name: Upload macOS M1 binary to release
         uses: actions/upload-release-asset@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./lmcmd-macos-m1
