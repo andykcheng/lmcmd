@@ -46,6 +46,13 @@ jobs:
           mkdir -p release/linux
           mv lmcmd release/linux/lmcmd
 
+      - name: Upload Linux binary
+        if: steps.check_output.conclusion == 'success'
+        uses: actions/upload-artifact@v3
+        with:
+          name: linux-binary
+          path: release/linux/lmcmd
+
       - name: Upload output log
         if: steps.check_output.conclusion == 'failure'
         uses: actions/upload-artifact@v3
@@ -91,6 +98,13 @@ jobs:
         run: |
           mkdir -p release/macos-x86
           mv lmcmd release/macos-x86/lmcmd
+
+      - name: Upload macOS x86 binary
+        if: steps.check_output.conclusion == 'success'
+        uses: actions/upload-artifact@v3
+        with:
+          name: macos-x86-binary
+          path: release/macos-x86/lmcmd
 
       - name: Upload output log
         if: steps.check_output.conclusion == 'failure'
@@ -138,6 +152,13 @@ jobs:
           mkdir -p release/macos-m1
           mv lmcmd release/macos-m1/lmcmd
 
+      - name: Upload macOS M1 binary
+        if: steps.check_output.conclusion == 'success'
+        uses: actions/upload-artifact@v3
+        with:
+          name: macos-m1-binary
+          path: release/macos-m1/lmcmd
+
       - name: Upload output log
         if: steps.check_output.conclusion == 'failure'
         uses: actions/upload-artifact@v3
@@ -182,26 +203,26 @@ jobs:
       - name: Download Linux binary
         uses: actions/download-artifact@v3
         with:
-          name: release-linux
-          path: release/linux
+          name: linux-binary
+          path: .
 
       - name: Download macOS x86 binary
         uses: actions/download-artifact@v3
         with:
-          name: release-macos-x86
-          path: release/macos-x86
+          name: macos-x86-binary
+          path: .
 
       - name: Download macOS M1 binary
         uses: actions/download-artifact@v3
         with:
-          name: release-macos-m1
-          path: release/macos-m1
+          name: macos-m1-binary
+          path: .
 
       - name: Upload Linux binary to release
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: release/linux/lmcmd
+          asset_path: linux-binary/lmcmd
           asset_name: linux/lmcmd
           asset_content_type: application/octet-stream
         env:
@@ -211,7 +232,7 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: release/macos-x86/lmcmd
+          asset_path: macos-x86-binary/lmcmd
           asset_name: macos-x86/lmcmd
           asset_content_type: application/octet-stream
         env:
@@ -221,7 +242,7 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: release/macos-m1/lmcmd
+          asset_path: macos-m1-binary/lmcmd
           asset_name: macos-m1/lmcmd
           asset_content_type: application/octet-stream
         env:
