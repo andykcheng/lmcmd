@@ -197,46 +197,27 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: lmcmd-linux-binary
-          path: .
+          path: binary/linux
 
       - name: Download macOS x86 binary
         uses: actions/download-artifact@v3
         with:
           name: lmcmd-macos-x86-binary
-          path: .
+          path: binary/macos-x86
 
       - name: Download macOS M1 binary
         uses: actions/download-artifact@v3
         with:
           name: lmcmd-macos-m1-binary
-          path: .
+          path: binary/macos-m1
 
       - name: Upload Linux binary to release
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./lmcmd-linux
-          asset_name: binary/linux/lmcmd
+          asset_path: ./binary
+          asset_name: binary
           asset_content_type: application/octet-stream
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload macOS x86 binary to release
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./lmcmd-macos-x86
-          asset_name: binary/macos-x86/lmcmd
-          asset_content_type: application/octet-stream
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload macOS M1 binary to release
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./lmcmd-macos-m1
-          asset_name: binary/macos-m1/lmcmd
-          asset_content_type: application/octet-stream
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
