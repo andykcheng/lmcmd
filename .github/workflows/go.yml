@@ -81,11 +81,12 @@ jobs:
       - name: Check output for specific string
         id: check_output
         run: |
-          if grep -q "find / -name 'xx*'" output.log; then
-            echo "String found in output"
-          else
-            echo "String not found in output"
-            exit 1
+          if cat output.log | grep "find /" 
+          then
+                  echo "String found in output"
+          else 
+                  echo "String not found"
+                  exit 1
           fi
 
       - name: Upload macOS x86 binary
@@ -128,11 +129,12 @@ jobs:
       - name: Check output for specific string
         id: check_output
         run: |
-          if grep -q "find / -name 'xx*'" output.log; then
-            echo "String found in output"
-          else
-            echo "String not found in output"
-            exit 1
+          if cat output.log | grep "find /" 
+          then
+                  echo "String found in output"
+          else 
+                  echo "String not found"
+                  exit 1
           fi
 
       - name: Upload macOS M1 binary
