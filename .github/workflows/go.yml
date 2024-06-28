@@ -11,63 +11,61 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.20'
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.20'
 
-    - name: Build
-      run: go build -v -o lmcmd lmcmd.go
+      - name: Build
+        run: go build -v -o lmcmd lmcmd.go
 
-    - name: Upload binary
-      uses: actions/upload-artifact@v3
-      with:
-        name: lmcmd-binary
-        path: lmcmd
+      - name: Upload binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: lmcmd-binary
+          path: lmcmd
 
   release:
     needs: build
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Git
-      run: |
-        git config --global user.name 'github-actions'
-        git config --global user.email 'github-actions@github.com'
+      - name: Set up Git
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
 
-    - name: Bump version
-      run: |
-        chmod +x version_bump.sh
-        ./version_bump.sh
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Read version
+        id: get_version
+        run: echo "::set-output name=version::$(cat VERSION)"
 
-    - name: Commit version bump
-      run: |
-        git add VERSION
-        git commit -m "Bump version to $(cat VERSION)"
-        git tag v$(cat VERSION)
-        git push origin main --tags
+      - name: Tag version
+        run: |
+          git tag v${{ steps.get_version.outputs.version }}
+          git push origin v${{ steps.get_version.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Create GitHub release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: v$(cat VERSION)
-        release_name: Release v$(cat VERSION)
-        draft: false
-        prerelease: false
+      - name: Create GitHub release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.get_version.outputs.version }}
+          release_name: Release v${{ steps.get_version.outputs.version }}
+          draft: false
+          prerelease: false
 
-    - name: Upload release asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./lmcmd
-        asset_name: lmcmd
-        asset_content_type: application/octet-stream
+      - name: Upload release asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./lmcmd
+          asset_name: lmcmd
+          asset_content_type: application/octet-stream
