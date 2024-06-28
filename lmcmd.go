@@ -1,4 +1,4 @@
-package lmcmd
+package main
 
 import (
 	"bufio"
