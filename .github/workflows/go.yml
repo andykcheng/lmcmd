@@ -24,7 +24,7 @@ jobs:
       - name: Write API key to config
         run: |
           mkdir -p ~/.lmcmd
-          echo "${{ secrets.API_KEY }}" > ~/.lmcmd/config
+          echo "${{ secrets.API_KEY }}" > ~/.lmcmd.config
 
       - name: Run lmcmd-linux and capture output
         id: run_lmcmd
