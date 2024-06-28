@@ -28,7 +28,7 @@ jobs:
 
       - name: Run lmcmd-linux and capture output
         id: run_lmcmd
-        run: ./lmcmd-linux | tee output.log
+        run: ./lmcmd-linux "find all files with file name starting with xx, starting from the root folder"| tee output.log
 
       - name: Check output for specific string
         id: check_output
@@ -75,7 +75,7 @@ jobs:
 
       - name: Run lmcmd-macos-x86 and capture output
         id: run_lmcmd
-        run: ./lmcmd-macos-x86 | tee output.log
+        run: ./lmcmd-macos-x86 "find all files with file name starting with xx, starting from the root folder" | tee output.log
 
       - name: Check output for specific string
         id: check_output
@@ -122,7 +122,7 @@ jobs:
 
       - name: Run lmcmd-macos-m1 and capture output
         id: run_lmcmd
-        run: ./lmcmd-macos-m1 | tee output.log
+        run: ./lmcmd-macos-m1 "find all files with file name starting with xx, starting from the root folder" | tee output.log
 
       - name: Check output for specific string
         id: check_output
