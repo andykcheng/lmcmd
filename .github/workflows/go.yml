@@ -21,11 +21,38 @@ jobs:
         run: |
           GOOS=linux GOARCH=amd64 go build -v -o lmcmd-linux lmcmd.go
 
+      - name: Write API key to config
+        run: |
+          mkdir -p ~/.lmcmd
+          echo "${{ secrets.API_KEY }}" > ~/.lmcmd/config
+
+      - name: Run lmcmd-linux and capture output
+        id: run_lmcmd
+        run: ./lmcmd-linux | tee output.log
+
+      - name: Check output for specific string
+        id: check_output
+        run: |
+          if grep -q "find / -name 'xx*'" output.log; then
+            echo "String found in output"
+          else
+            echo "String not found in output"
+            exit 1
+          fi
+
       - name: Upload Linux binary
+        if: steps.check_output.conclusion == 'success'
         uses: actions/upload-artifact@v3
         with:
           name: lmcmd-linux-binary
           path: lmcmd-linux
+
+      - name: Upload output log
+        if: steps.check_output.conclusion == 'failure'
+        uses: actions/upload-artifact@v3
+        with:
+          name: output-log-linux
+          path: output.log
 
   build-macos-x86:
     runs-on: macos-latest
@@ -41,11 +68,38 @@ jobs:
         run: |
           GOOS=darwin GOARCH=amd64 go build -v -o lmcmd-macos-x86 lmcmd.go
 
+      - name: Write API key to config
+        run: |
+          mkdir -p ~/.lmcmd
+          echo "${{ secrets.API_KEY }}" > ~/.lmcmd/config
+
+      - name: Run lmcmd-macos-x86 and capture output
+        id: run_lmcmd
+        run: ./lmcmd-macos-x86 | tee output.log
+
+      - name: Check output for specific string
+        id: check_output
+        run: |
+          if grep -q "find / -name 'xx*'" output.log; then
+            echo "String found in output"
+          else
+            echo "String not found in output"
+            exit 1
+          fi
+
       - name: Upload macOS x86 binary
+        if: steps.check_output.conclusion == 'success'
         uses: actions/upload-artifact@v3
         with:
           name: lmcmd-macos-x86-binary
           path: lmcmd-macos-x86
+
+      - name: Upload output log
+        if: steps.check_output.conclusion == 'failure'
+        uses: actions/upload-artifact@v3
+        with:
+          name: output-log-macos-x86
+          path: output.log
 
   build-macos-m1:
     runs-on: macos-latest
@@ -61,15 +115,43 @@ jobs:
         run: |
           GOOS=darwin GOARCH=arm64 go build -v -o lmcmd-macos-m1 lmcmd.go
 
+      - name: Write API key to config
+        run: |
+          mkdir -p ~/.lmcmd
+          echo "${{ secrets.API_KEY }}" > ~/.lmcmd/config
+
+      - name: Run lmcmd-macos-m1 and capture output
+        id: run_lmcmd
+        run: ./lmcmd-macos-m1 | tee output.log
+
+      - name: Check output for specific string
+        id: check_output
+        run: |
+          if grep -q "find / -name 'xx*'" output.log; then
+            echo "String found in output"
+          else
+            echo "String not found in output"
+            exit 1
+          fi
+
       - name: Upload macOS M1 binary
+        if: steps.check_output.conclusion == 'success'
         uses: actions/upload-artifact@v3
         with:
           name: lmcmd-macos-m1-binary
           path: lmcmd-macos-m1
 
+      - name: Upload output log
+        if: steps.check_output.conclusion == 'failure'
+        uses: actions/upload-artifact@v3
+        with:
+          name: output-log-macos-m1
+          path: output.log
+
   release:
     needs: [build-linux, build-macos-x86, build-macos-m1]
     runs-on: ubuntu-latest
+    if: needs.build-linux.result == 'success' && needs.build-macos-x86.result == 'success' && needs.build-macos-m1.result == 'success'
     steps:
       - uses: actions/checkout@v4
 
@@ -85,20 +167,20 @@ jobs:
       - name: Tag version
         run: |
           git tag v${{ steps.get_version.outputs.version }}
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/andykcheng/lmcmd.git v${{ steps.get_version.outputs.version }}
+          git push origin v${{ steps.get_version.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create GitHub release
         id: create_release
         uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: v${{ steps.get_version.outputs.version }}
           release_name: Release v${{ steps.get_version.outputs.version }}
           draft: false
           prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download Linux binary
         uses: actions/download-artifact@v3
@@ -120,30 +202,30 @@ jobs:
 
       - name: Upload Linux binary to release
         uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./lmcmd-linux
           asset_name: lmcmd-linux
           asset_content_type: application/octet-stream
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload macOS x86 binary to release
         uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./lmcmd-macos-x86
           asset_name: lmcmd-macos-x86
           asset_content_type: application/octet-stream
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload macOS M1 binary to release
         uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./lmcmd-macos-m1
           asset_name: lmcmd-macos-m1
           asset_content_type: application/octet-stream
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
