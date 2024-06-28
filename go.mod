@@ -1,4 +1,4 @@
-module screenshot-example
+module lmcmd
 
 go 1.23
 
