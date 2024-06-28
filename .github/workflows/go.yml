@@ -19,7 +19,7 @@ jobs:
 
       - name: Build for Linux
         run: |
-          GOOS=linux GOARCH=amd64 go build -v -o lmcmd-linux lmcmd.go
+          GOOS=linux GOARCH=amd64 go build -v -o lmcmd lmcmd.go
 
       - name: Write API key to config
         run: |
@@ -28,25 +28,23 @@ jobs:
 
       - name: Run lmcmd-linux and capture output
         id: run_lmcmd
-        run: ./lmcmd-linux "find all files with file name starting with xx, starting from the root folder"| tee output.log
+        run: ./lmcmd "find all files with file name starting with xx, starting from the root folder" | tee output.log
 
       - name: Check output for specific string
         id: check_output
         run: |
-          if cat output.log | grep "find /" 
-          then
-                  echo "String found in output"
-          else 
-                  echo "String not found"
-                  exit 1
+          if grep -q "find /" output.log; then
+            echo "String found in output"
+          else
+            echo "String not found"
+            exit 1
           fi
 
-      - name: Upload Linux binary
+      - name: Prepare Linux binary for upload
         if: steps.check_output.conclusion == 'success'
-        uses: actions/upload-artifact@v3
-        with:
-          name: lmcmd-linux-binary
-          path: lmcmd-linux
+        run: |
+          mkdir -p release/linux
+          mv lmcmd release/linux/lmcmd
 
       - name: Upload output log
         if: steps.check_output.conclusion == 'failure'
@@ -67,7 +65,7 @@ jobs:
 
       - name: Build for macOS x86
         run: |
-          GOOS=darwin GOARCH=amd64 go build -v -o lmcmd-macos-x86 lmcmd.go
+          GOOS=darwin GOARCH=amd64 go build -v -o lmcmd lmcmd.go
 
       - name: Write API key to config
         run: |
@@ -76,25 +74,23 @@ jobs:
 
       - name: Run lmcmd-macos-x86 and capture output
         id: run_lmcmd
-        run: ./lmcmd-macos-x86 "find all files with file name starting with xx, starting from the root folder" | tee output.log
+        run: ./lmcmd "find all files with file name starting with xx, starting from the root folder" | tee output.log
 
       - name: Check output for specific string
         id: check_output
         run: |
-          if cat output.log | grep "find /" 
-          then
-                  echo "String found in output"
-          else 
-                  echo "String not found"
-                  exit 1
+          if grep -q "find /" output.log; then
+            echo "String found in output"
+          else
+            echo "String not found"
+            exit 1
           fi
 
-      - name: Upload macOS x86 binary
+      - name: Prepare macOS x86 binary for upload
         if: steps.check_output.conclusion == 'success'
-        uses: actions/upload-artifact@v3
-        with:
-          name: lmcmd-macos-x86-binary
-          path: lmcmd-macos-x86
+        run: |
+          mkdir -p release/macos-x86
+          mv lmcmd release/macos-x86/lmcmd
 
       - name: Upload output log
         if: steps.check_output.conclusion == 'failure'
@@ -115,7 +111,7 @@ jobs:
 
       - name: Build for macOS M1
         run: |
-          GOOS=darwin GOARCH=arm64 go build -v -o lmcmd-macos-m1 lmcmd.go
+          GOOS=darwin GOARCH=arm64 go build -v -o lmcmd lmcmd.go
 
       - name: Write API key to config
         run: |
@@ -124,25 +120,23 @@ jobs:
 
       - name: Run lmcmd-macos-m1 and capture output
         id: run_lmcmd
-        run: ./lmcmd-macos-m1 "find all files with file name starting with xx, starting from the root folder" | tee output.log
+        run: ./lmcmd "find all files with file name starting with xx, starting from the root folder" | tee output.log
 
       - name: Check output for specific string
         id: check_output
         run: |
-          if cat output.log | grep "find /" 
-          then
-                  echo "String found in output"
-          else 
-                  echo "String not found"
-                  exit 1
+          if grep -q "find /" output.log; then
+            echo "String found in output"
+          else
+            echo "String not found"
+            exit 1
           fi
 
-      - name: Upload macOS M1 binary
+      - name: Prepare macOS M1 binary for upload
         if: steps.check_output.conclusion == 'success'
-        uses: actions/upload-artifact@v3
-        with:
-          name: lmcmd-macos-m1-binary
-          path: lmcmd-macos-m1
+        run: |
+          mkdir -p release/macos-m1
+          mv lmcmd release/macos-m1/lmcmd
 
       - name: Upload output log
         if: steps.check_output.conclusion == 'failure'
@@ -188,27 +182,27 @@ jobs:
       - name: Download Linux binary
         uses: actions/download-artifact@v3
         with:
-          name: lmcmd-linux-binary
-          path: .
+          name: release-linux
+          path: release/linux
 
       - name: Download macOS x86 binary
         uses: actions/download-artifact@v3
         with:
-          name: lmcmd-macos-x86-binary
-          path: .
+          name: release-macos-x86
+          path: release/macos-x86
 
       - name: Download macOS M1 binary
         uses: actions/download-artifact@v3
         with:
-          name: lmcmd-macos-m1-binary
-          path: .
+          name: release-macos-m1
+          path: release/macos-m1
 
       - name: Upload Linux binary to release
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./lmcmd-linux
-          asset_name: lmcmd-linux
+          asset_path: release/linux/lmcmd
+          asset_name: linux/lmcmd
           asset_content_type: application/octet-stream
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -217,8 +211,8 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./lmcmd-macos-x86
-          asset_name: lmcmd-macos-x86
+          asset_path: release/macos-x86/lmcmd
+          asset_name: macos-x86/lmcmd
           asset_content_type: application/octet-stream
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -227,8 +221,8 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./lmcmd-macos-m1
-          asset_name: lmcmd-macos-m1
+          asset_path: release/macos-m1/lmcmd
+          asset_name: macos-m1/lmcmd
           asset_content_type: application/octet-stream
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
