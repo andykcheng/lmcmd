@@ -17,7 +17,7 @@ import (
 const keyFileName = ".lmcmd.config"
 
 func getKeyFromUser() string {
-	fmt.Print("Enter your key: ")
+	fmt.Print("Enter your key for Together AI: ")
 	reader := bufio.NewReader(os.Stdin)
 	key, _ := reader.ReadString('\n')
 	return strings.TrimSpace(key)
