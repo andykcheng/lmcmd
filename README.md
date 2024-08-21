@@ -26,3 +26,10 @@ Command: echo 'hello world' > haha.txt
 Explanation: Create a file named haha.txt with the content 'hello world'
 Command copied to clipboard.
  ```
+
+ # Running the command
+ Please download the executable from the releases or download the source.
+
+ When downloading the executable, make the downloaded file executable by `chmod +x lmcmd-xxx`.
+
+ For MAC OS, execute `xattr -d com.apple.quarantine lmcmd-macos-xxx` to take the executable out of quarantine.
