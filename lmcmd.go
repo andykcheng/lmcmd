@@ -17,7 +17,7 @@ import (
 const keyFileName = ".lmcmd.config"
 
 func getKeyFromUser() string {
-	fmt.Print("Enter your key for Together AI: ")
+	fmt.Print("Enter your OpenAI API key: ")
 	reader := bufio.NewReader(os.Stdin)
 	key, _ := reader.ReadString('\n')
 	return strings.TrimSpace(key)
@@ -32,6 +32,7 @@ func saveKey(key string) error {
 	keyFilePath := filepath.Join(homeDir, keyFileName)
 	return os.WriteFile(keyFilePath, []byte(key), 0600)
 }
+
 func getKey() (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -40,7 +41,6 @@ func getKey() (string, error) {
 	keyFilePath := filepath.Join(homeDir, keyFileName)
 
 	if _, err := os.Stat(keyFilePath); os.IsNotExist(err) {
-		// File does not exist, ask user for key
 		key := getKeyFromUser()
 		if err := saveKey(key); err != nil {
 			return "", err
@@ -48,7 +48,6 @@ func getKey() (string, error) {
 		return key, nil
 	}
 
-	// File exists, read key
 	keyBytes, err := os.ReadFile(keyFilePath)
 	if err != nil {
 		return "", err
@@ -56,19 +55,25 @@ func getKey() (string, error) {
 	return strings.TrimSpace(string(keyBytes)), nil
 }
 
-type TogetherBodyMessage struct {
+type OpenAIMessage struct {
 	Role    string `json:"role"`
 	Content string `json:"content"`
 }
-type TogetherBody struct {
-	Model       string                `json:"model"`
-	Messages    []TogetherBodyMessage `json:"messages"`
-	Temperature float32               `json:"temperature"`
-	MaxTokens   int                   `json:"max_tokens"`
+
+type OpenAIBody struct {
+	Model       string          `json:"model"`
+	Messages    []OpenAIMessage `json:"messages"`
+	Temperature float32         `json:"temperature"`
+	MaxTokens   int             `json:"max_tokens"`
+	TopP        float32         `json:"top_p"`
 }
-type TogetherOutput struct {
-	Explanation string `json:"explanation"`
-	Command     string `json:"command"`
+
+type OpenAIResponse struct {
+	Choices []struct {
+		Message struct {
+			Content string `json:"content"`
+		} `json:"message"`
+	} `json:"choices"`
 }
 
 func main() {
@@ -77,9 +82,9 @@ func main() {
 		fmt.Println("Failed to get key:", err)
 		return
 	}
-	fmt.Println("Your key is:", key)
+	// fmt.Println("Your key is:", key)
 
-	// get the user input from args
+	// Get the user input from args
 	args := os.Args[1:]
 	if len(args) == 0 {
 		fmt.Println("Please provide a command to generate")
@@ -95,27 +100,24 @@ func main() {
 		osRunning = "linux"
 	}
 	fmt.Printf("Generating command for %s\n", osRunning)
-	url := "https://api.together.xyz/v1/chat/completions"
+	url := "https://api.openai.com/v1/chat/completions"
 	method := "POST"
 
-	payloadBody := TogetherBody{
-		Model: "meta-llama/Llama-3-70b-chat-hf",
-		Messages: []TogetherBodyMessage{
-			{Role: "system", Content: fmt.Sprintf(`You are a command generator which will generate %s commands according to user requirements. 
-			
-			Give the command and explanation of the command especially the parameters used.
-
-			Output in a json format like the following:
-				{
-					"command": "ls -l",
-					"explanation": "List files in long format"
-				}
-				Do not output anything else except the json structure.
+	payloadBody := OpenAIBody{
+		Model: "gpt-3.5-turbo",
+		Messages: []OpenAIMessage{
+			{Role: "system", Content: fmt.Sprintf(`You are an AI model that generates shell commands for %s operating system.
+			You will only output a JSON format with the command and explanation. Example:
+			{
+				"command": "ls -l",
+				"explanation": "List files with ls command with -l flag for long output format"
+			}
 			`, osRunning)},
 			{Role: "user", Content: command},
 		},
-		Temperature: 0.8,
+		Temperature: 0.1,
 		MaxTokens:   500,
+		TopP:        1.0,
 	}
 
 	payloadJSON, err := json.Marshal(payloadBody)
@@ -127,7 +129,6 @@ func main() {
 
 	client := &http.Client{}
 	req, err := http.NewRequest(method, url, payload)
-
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -148,48 +149,47 @@ func main() {
 		return
 	}
 
-	//parse only the first choice message
-	var response struct {
-		Choices []struct {
-			Message struct {
-				Content string `json:"content"`
-			} `json:"message"`
-		} `json:"choices"`
-	}
+	// Print the raw response body for troubleshooting
+	// fmt.Println("Raw response body:", string(body))
 
-	err = json.Unmarshal(body, &response)
-	if err != nil {
+	var response OpenAIResponse
+	if err := json.Unmarshal(body, &response); err != nil {
 		fmt.Println(err)
 		return
 	}
-	outputFromLllm := response.Choices[0].Message.Content
-	// parse outputFromLlm to get the json format into a TogetherOutput struct
-	var togetherOutput TogetherOutput
-	err = json.Unmarshal([]byte(outputFromLllm), &togetherOutput)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	const (
-		ColorReset  = "\033[0m"
-		ColorRed    = "\033[31m"
-		ColorGreen  = "\033[32m"
-		ColorYellow = "\033[33m"
-		ColorBlue   = "\033[34m"
-		ColorPurple = "\033[35m"
-		ColorCyan   = "\033[36m"
-		ColorWhite  = "\033[37m"
-	)
 
-	fmt.Println(ColorGreen, togetherOutput.Explanation, ColorReset, "\n")
-	fmt.Println(ColorBlue, togetherOutput.Command, ColorReset, "\n")
-	fmt.Println(ColorGreen, "Command copied to clipboard", ColorReset, "\n")
+	if len(response.Choices) > 0 {
+		//parse the response.Choices[0].Message.Content and put command into a variable and put explanation into another variable
+		// Parse the JSON content
+		type Content struct {
+			Command     string `json:"command"`
+			Explanation string `json:"explanation"`
+		}
+		var content Content
+		if err := json.Unmarshal([]byte(response.Choices[0].Message.Content), &content); err != nil {
+			fmt.Println(err)
+			return
+		}
+		if content.Command == "" || content.Explanation == "" {
+			fmt.Println("Error: JSON content does not have required attributes 'command' and 'explanation'")
+			return
+		}
 
-	err = clipboard.WriteAll(togetherOutput.Command)
-	if err != nil {
-		fmt.Println("Failed to copy to clipboard:", err)
-		return
+		// Assign to variables
+		command := content.Command
+		explanation := content.Explanation
+
+		// Step 3: Assign to variables
+		fmt.Println("Command:", command)
+		fmt.Println("Explanation:", explanation)
+
+		if err := clipboard.WriteAll(command); err != nil {
+			fmt.Println("Failed to copy command to clipboard:", err)
+			return
+		}
+		fmt.Println("Command copied to clipboard.")
+	} else {
+		fmt.Println("No command generated.")
 	}
-	fmt.Println("Text copied to clipboard successfully")
 
 }
