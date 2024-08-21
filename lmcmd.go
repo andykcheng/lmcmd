@@ -150,7 +150,7 @@ func main() {
 	}
 
 	// Print the raw response body for troubleshooting
-	fmt.Println("Raw response body:", string(body))
+	// fmt.Println("Raw response body:", string(body))
 
 	var response OpenAIResponse
 	if err := json.Unmarshal(body, &response); err != nil {
