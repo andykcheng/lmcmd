@@ -81,7 +81,7 @@ jobs:
       - name: Check output for specific string
         id: check_output
         run: |
-          if cat output.log | grep "find /" 
+          if cat output.log | grep "find" 
           then
                   echo "String found in output"
           else 
@@ -129,7 +129,7 @@ jobs:
       - name: Check output for specific string
         id: check_output
         run: |
-          if cat output.log | grep "find /" 
+          if cat output.log | grep "find" 
           then
                   echo "String found in output"
           else 

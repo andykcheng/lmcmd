@@ -1,0 +1,4 @@
+Generating command for mac
+Command: find / -type f -name 'xx*' 2>/dev/null
+Explanation: Find all files starting with 'xx' from the root folder using the find command with -type f flag to search only for files and -name 'xx*' to match file names starting with 'xx'. Redirect error output to /dev/null to suppress permission denied errors.
+Command copied to clipboard.
